@@ -1,228 +1,291 @@
-# devops-skills
+<div align="center">
 
-Three Claude Code skills that generate production-hardened Docker, Terraform, and Monitoring configurations.
+# claude-devops-skills
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+**Three Claude Code skills that generate production-hardened Docker, Terraform, and Monitoring configs.**
+
+43-item combined checklist. Every config. Every time.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-Skills-blueviolet)](https://docs.anthropic.com/en/docs/claude-code/overview)
+[![Docker](https://img.shields.io/badge/Docker-Compose_%7C_Multi--stage-2496ED?logo=docker&logoColor=white)](#docker-generator)
+[![Terraform](https://img.shields.io/badge/Terraform-AWS_%7C_GCP_%7C_Azure-844FBA?logo=terraform&logoColor=white)](#terraform-generator)
+[![Prometheus](https://img.shields.io/badge/Monitoring-Prometheus_%7C_Grafana-E6522C?logo=prometheus&logoColor=white)](#monitoring-generator)
+
+</div>
 
 ---
 
 ## The Problem
 
-Every DevOps engineer writes Docker, Terraform, and monitoring configs from scratch. Every time, something gets missed — a healthcheck, a security hardening flag, a recording rule, a lifecycle policy. Code reviews catch some of it. Production incidents catch the rest.
+You write a Dockerfile. It works. It runs as root. No healthcheck. No init process. Layers in the wrong order. Secrets baked into the image.
 
-These skills encode the checklist that experience built into reusable prompt engineering. Run the command, get the config that passes review.
+You write Terraform. It applies. No state locking. No encryption. IAM policy has `"Action": "*"`. No `prevent_destroy` on the database.
+
+You configure alerting. It fires. At 3am. For a deploy blip. Every time. Your team starts ignoring alerts.
+
+These aren't beginner mistakes. They're the things senior engineers forget at 2pm on a Tuesday because they're juggling 14 other things.
 
 ---
 
 ## What This Is
 
-Three Claude Code skills that encode senior-level DevOps knowledge into reusable slash commands. They generate production-ready configs that pass a combined 43-item checklist across Docker (14 items), Terraform (15 items), and Monitoring (14 items).
+Three Claude Code skills that encode senior-level DevOps knowledge into repeatable prompt engineering. Describe what you need in plain English — get production-ready configs that pass a **43-item combined checklist**.
 
-You describe your stack. The skill produces every file — with inline comments explaining non-obvious decisions, not tutorials explaining what Docker is.
+```
+You: "I need Docker for a FastAPI app with Celery, PostgreSQL, Redis, and Nginx. Production-ready."
+
+Claude: generates 6 files — multi-stage Dockerfile, docker-compose with healthchecks,
+        security hardening, network separation, resource limits, nginx.conf, .dockerignore,
+        .env.example. Every file annotated with architectural decisions.
+```
 
 ---
 
 ## Skills
 
-| Skill | Slash Command | What It Generates |
-|-------|--------------|-------------------|
-| docker-generator | `/docker-generator` | Dockerfiles (multi-stage), Docker Compose (dev + prod), `.dockerignore`, `.env.example` |
-| terraform-generator | `/terraform-generator` | Module structures, environment separation, state backends, IAM, networking, compute |
-| monitoring-generator | `/monitoring-generator` | Prometheus alerting + recording rules, Grafana dashboards (JSON), AlertManager routing, ServiceMonitors |
-
----
-
-## What "Production-Hardened" Means
-
-Not a vague claim. These are the actual checklist items each skill enforces before delivery.
-
-### Docker (14 items)
-
-- Base images pinned to minor version — no `latest`
-- Non-root user with fixed UID/GID (1001)
-- Init process present (`dumb-init`/`tini` or `init: true`)
-- Healthchecks on every service (functionality check, not process check)
-- Memory and CPU limits on every container
-- `read_only: true` filesystem with `tmpfs` for writable dirs
-- `no-new-privileges:true` security option
-- `cap_drop: ALL` — add back only what's needed
-- Log rotation configured (`max-size`, `max-file`)
-- `.dockerignore` uses deny-all pattern (`**` then allow-list)
-- No secrets baked into images
-- `depends_on` uses `condition: service_healthy`
-- Layer order optimized for cache hits (least-changing layers first)
-- `.env.example` generated alongside every compose file
-
-### Terraform (15 items)
-
-- Provider and Terraform versions pinned in `versions.tf`
-- Remote backend with encryption and locking (S3+DynamoDB or GCS)
-- All variables have `description` and explicit `type`
-- Sensitive variables marked with `sensitive = true`
-- `terraform.tfvars.example` provided — no real secrets committed
-- Common tags in `locals.tf` applied to every tagged resource
-- Consistent naming via `local.name_prefix`
-- IAM follows least privilege — no `*` actions or resources
-- Encryption enabled on all storage (S3, RDS, EBS, EFS)
-- Security groups use separate rule resources (not inline)
-- `prevent_destroy` on stateful resources
-- `create_before_destroy` on resources where replacement causes downtime
-- Data sources for existing resources — no hardcoded IDs
-- `.gitignore` covers state files, tfvars, `.terraform/`, plan files
-- Inline comments explain infrastructure design decisions
-
-### Monitoring (14 items)
-
-- Every alert has a `for` duration — no flapping on transient spikes
-- Every alert has `severity`, `team`, `summary`, `description`, `runbook_url`
-- Critical alerts pass the 3am test — worth waking someone up
-- Warning alerts are actionable within business hours
-- Recording rules pre-compute expensive dashboard/alert queries
-- Recording rules follow `level:metric:operations` naming convention
-- AlertManager routing separates critical (PagerDuty) from warning (Slack)
-- Inhibition rules suppress warnings when critical fires for the same alert
-- Grafana dashboards use template variables (`$service`, `$namespace`)
-- Dashboards reference recording rules, not raw queries
-- ServiceMonitors drop high-cardinality metrics at scrape time
-- SLOs use multi-window burn rate approach
-- Slack messages include runbook + dashboard links
-- `send_resolved: true` on all receivers
+| Skill | Command | Generates | Checklist |
+|:------|:--------|:----------|:---------:|
+| **Docker** | `/docker-generator` | Dockerfiles, Compose, .dockerignore, nginx configs | 14 items |
+| **Terraform** | `/terraform-generator` | Modules, backends, IAM, networking, multi-env | 15 items |
+| **Monitoring** | `/monitoring-generator` | Prometheus rules, Grafana dashboards, AlertManager | 14 items |
 
 ---
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-org/devops-skills.git
-cd devops-skills
+git clone https://github.com/idanvn/claude-devops-skills.git
+cd claude-devops-skills
 ./install.sh
 ```
 
-Restart Claude Code. All three slash commands are active.
+Restart Claude Code. Done.
 
 ---
 
-## Example Usage
+## What "Production-Hardened" Actually Means
+
+Not a vague claim. Here's exactly what each skill enforces:
+
+### Docker — 14 checks
+
+```
+ ✓ Base images pinned to minor version         ✓ No secrets baked into images
+ ✓ Non-root user with fixed UID/GID            ✓ depends_on with service_healthy
+ ✓ Init process (tini/dumb-init)               ✓ Inline comments on decisions
+ ✓ Healthchecks for every service              ✓ Layer order optimized for cache
+ ✓ Resource limits (memory + CPU)              ✓ .env.example alongside compose
+ ✓ read_only, no-new-privileges, cap_drop ALL  ✓ Multi-arch when needed
+ ✓ Log rotation configured                     ✓ .dockerignore deny-all pattern
+```
+
+### Terraform — 15 checks
+
+```
+ ✓ Provider + Terraform versions pinned        ✓ Encryption on all storage
+ ✓ Remote backend with encryption + locking    ✓ Security groups — separate rules
+ ✓ All variables: description + type           ✓ prevent_destroy on stateful resources
+ ✓ Sensitive vars marked sensitive = true      ✓ create_before_destroy on replaceable
+ ✓ terraform.tfvars.example provided           ✓ Data sources over hardcoded IDs
+ ✓ Common tags via locals.tf                   ✓ .gitignore covers state + secrets
+ ✓ Consistent naming (project-env-resource)    ✓ Inline comments on design decisions
+ ✓ IAM least privilege (no * actions)
+```
+
+### Monitoring — 14 checks
+
+```
+ ✓ Every alert has for duration (no flapping)  ✓ Dashboards use template variables
+ ✓ severity + team + summary + runbook_url     ✓ Dashboards reference recording rules
+ ✓ Critical alerts pass the 3am test           ✓ ServiceMonitors drop unused metrics
+ ✓ Warning alerts are actionable               ✓ SLOs use multi-window burn rate
+ ✓ Recording rules pre-compute queries         ✓ Slack messages include runbook links
+ ✓ Recording rules: level:metric:operations    ✓ send_resolved: true on all receivers
+ ✓ AlertManager separates critical/warning     ✓ Inhibition suppresses duplicates
+```
+
+---
+
+## Real Examples
 
 ### Docker
 
 **Prompt:**
 ```
-/docker-generator FastAPI app with Celery workers, PostgreSQL, Redis, and Nginx reverse proxy.
-Production + dev environments.
+I need Docker for a FastAPI app with Celery workers, PostgreSQL 16,
+Redis 7, and Nginx as reverse proxy. Production-ready. Python 3.12.
 ```
 
-**Output:** 6 files — `Dockerfile` (multi-stage Python build with virtualenv isolation), `docker-compose.yml` (base), `docker-compose.override.yml` (dev with bind mounts and debug ports), `docker-compose.prod.yml` (resource limits, restart policies, log rotation), `.dockerignore` (deny-all), `.env.example` (all required vars documented).
+**Output: 6 files**
 
-Every service has healthchecks, resource limits, and reads-only filesystem. Celery worker uses the same image as the API with a different `CMD`. Nginx has a `/healthz` location block. `depends_on` chains use `service_healthy` conditions throughout.
+| File | What It Does |
+|:-----|:-------------|
+| `Dockerfile` | Multi-stage: python:3.12-slim builder → slim runtime, non-root, dumb-init |
+| `docker-compose.yml` | 5 services, YAML anchors for security/logging, internal network |
+| `docker-compose.override.yml` | Dev: hot-reload, debug ports, bind mounts |
+| `docker-compose.prod.yml` | Hardened: read_only, cap_drop ALL, resource limits |
+| `.dockerignore` | Deny-all allowlist |
+| `.env.example` | Every required env var documented |
+
+Redis configured with `--save "" --appendonly no` — it's a cache, not a store. The database unique constraint is the safety net. Persistence would be wasted I/O.
+
+---
 
 ### Terraform
 
 **Prompt:**
 ```
-/terraform-generator AWS infrastructure: VPC, EKS cluster, RDS PostgreSQL, ElastiCache Redis, S3 bucket for uploads.
-Three environments: dev, staging, prod.
+I need Terraform for a production AWS setup: VPC with 3 AZs, EKS cluster,
+RDS PostgreSQL, ElastiCache Redis, S3 for uploads. Multi-environment.
 ```
 
-**Output:** 44 files across 3 environments — shared modules for VPC, EKS, RDS, ElastiCache, and S3; environment directories each with `main.tf`, `variables.tf`, `backend.tf`, `versions.tf`, `terraform.tfvars.example`; `global/state-backend/` to bootstrap the S3+DynamoDB state infrastructure; `.gitignore`.
+**Output: 44 files across 3 environments**
 
-Single NAT gateway in dev/staging, multi-AZ in prod. `prevent_destroy = true` on RDS and S3. KMS encryption on all storage. VPC Flow Logs enabled. IAM roles scoped to specific S3 prefixes and EKS namespaces.
+```
+infrastructure/
+├── global/state-backend/     # Bootstrap: S3 + DynamoDB for state
+├── modules/
+│   ├── vpc/                  # 3-AZ, flow logs, EKS subnet tags
+│   ├── eks/                  # 1.31, IRSA for EBS CSI + LB controller
+│   ├── rds/                  # PostgreSQL 16, enhanced monitoring, Secrets Manager
+│   ├── elasticache/          # Redis 7, auth token in Secrets Manager
+│   └── s3/                   # KMS encryption, versioning, lifecycle, CORS
+└── environments/
+    ├── dev/                  # t3.micro, single NAT, public endpoint
+    ├── staging/              # t3.small, 2-node Redis, PI enabled
+    └── prod/                 # r6g Graviton2, Multi-AZ, 3-node Redis, private endpoint
+```
+
+Graviton2 in prod for RDS and ElastiCache — better price-to-memory ratio. Single NAT in dev saves ~$100/AZ/month.
+
+---
 
 ### Monitoring
 
 **Prompt:**
 ```
-/monitoring-generator Payment webhook service. Monitors HTTP endpoints, PostgreSQL, and Redis.
-Alerts to PagerDuty (critical) and Slack (warnings). kube-prometheus-stack.
+Full monitoring for a payment webhook service with PostgreSQL and Redis
+on Kubernetes. Prometheus rules, Grafana dashboard, AlertManager routing.
 ```
 
-**Output:** Recording rules (p50/p95/p99 latency pre-computed, error rate pre-computed), 9 alerts (high error rate, high latency p99, traffic drop, PG connection saturation, PG replication lag, Redis memory, Redis eviction rate, pod crash-looping, PVC almost full), `ServiceMonitor` with cardinality reduction, AlertManager config with PagerDuty + two Slack channels + inhibition rules, Grafana dashboard JSON with RED metrics, DB panels, and deployment annotations.
+**Output: 4 files, 9 alerts, 11-panel dashboard**
+
+| File | Contents |
+|:-----|:---------|
+| `recording-rules.yaml` | Request rate, error rate, p50/p95/p99, cache hit rate, DB pool utilization |
+| `alerting-rules.yaml` | 9 alerts: p99 latency, error rate, traffic drop, cache hit rate, DB pool, crash-loop, memory, replicas |
+| `service-monitor.yaml` | 15s scrape, drops unused go_memstats_* and net_conntrack_* |
+| `grafana/dashboard.json` | 11 panels: RED metrics, cache hit/miss, DB connections, pod resources |
+
+High 4xx alert set as warning (not critical) — it signals HMAC misconfiguration, not an outage. Cache hit rate alert at 85% because below that, Redis isn't doing its job and the database absorbs unnecessary load.
 
 ---
 
-## Combined Example
+### All Three Together
 
-One session, one stack, all three skills:
+One prompt. Full stack.
 
+**Prompt:**
 ```
-/docker-generator Payment webhook service: Python FastAPI, Celery, PostgreSQL, Redis, Nginx.
-Production + dev.
-
-/terraform-generator AWS infrastructure for the payment service: EKS, RDS, ElastiCache, S3.
-Staging and prod environments.
-
-/monitoring-generator Monitoring for the payment webhook service. HTTP, Postgres, Redis, K8s pods.
-PagerDuty for critical, Slack #payments-alerts for warnings.
+I'm building a Go microservice that processes payment webhooks.
+PostgreSQL for storage, Redis for idempotency cache. Runs on EKS.
+Give me the full setup — Docker, Terraform, and monitoring.
 ```
 
-End result: containerized application with production-hardened Dockerfiles, Terraform that provisions the full AWS stack from scratch, and a monitoring layer with alerts calibrated to payment service SLAs — recording rules, 9 alerts, `ServiceMonitor`, Grafana dashboard — all generated in one session.
+The skills coordinated and made architectural decisions together:
+
+| Decision | Reasoning |
+|:---------|:----------|
+| Redis: `--save "" --appendonly no` | Idempotency cache — DB unique constraint is the real safety net |
+| IRSA scoped to `payments/payment-webhook` SA | No cluster-wide access leak |
+| Egress locked to 5432, 6379, 443 only | Postgres, Redis, Secrets Manager + payment callbacks |
+| `maxUnavailable: 0` in rolling update | Payment webhooks can't drop acknowledgments |
+| Scale-up: +4 pods/30s | Payment provider timeouts are strict |
+| Scale-down: 25%/min, 300s cooldown | Retries arrive in waves after spikes |
 
 ---
 
-## What's Inside Each Skill
+## What's Inside
 
-### docker-generator
+<details>
+<summary><b>docker-generator</b> — SKILL.md (~370 lines) + common-pitfalls.md (~160 lines)</summary>
 
-`SKILL.md` — 369 lines covering base image selection by runtime (Node, Python, Go, Java, Rust, .NET), multi-stage build patterns, layer optimization order, security hardening checklist, Docker Compose production template, healthcheck commands by service type, network segmentation, multi-environment compose layering, and the 14-item output checklist.
+**SKILL.md covers:** Base image selection table (6 stacks: Node, Python, Go, Java, Rust, .NET), layer optimization with full examples, multi-stage build patterns, security hardening (6 rules), init process handling, Compose production service template, healthcheck table (9 services), network separation, volumes, multi-environment compose layering, multi-arch builds with buildx, .env.example generation, deny-all .dockerignore, 14-item output checklist.
 
-`references/common-pitfalls.md` — 162 lines documenting known failure modes: Alpine + native dependency issues, JVM memory in containers, MongoDB replica set initialization in compose, Nginx upstream DNS re-resolution, and more.
+**common-pitfalls.md covers:** Alpine+glibc incompatibility, DNS resolution in Compose, volume permissions, build context size, signal handling, healthcheck timing by service type, layer cache invalidation, secrets leaking into layers, timezone issues, OOM kills with JVM/Node/Python fixes.
+</details>
 
-### terraform-generator
+<details>
+<summary><b>terraform-generator</b> — SKILL.md (~370 lines) + common-pitfalls.md (~250 lines)</summary>
 
-`SKILL.md` — 580 lines covering project structures for single and multi-environment setups, `versions.tf` pinning strategy, backend configuration (AWS S3+DynamoDB, GCP GCS), `locals.tf` naming conventions and tagging, variable conventions with `sensitive` and `validation`, module design principles, IAM least-privilege patterns, encryption configuration for S3/RDS/EBS, security group rules (separate resources, not inline), VPC with multi-AZ NAT, lifecycle rules, and the 15-item output checklist.
+**SKILL.md covers:** Project structure (single + multi-environment), versions.tf with pessimistic constraints, remote backends (S3+DynamoDB, GCS), locals.tf naming conventions and tagging strategy, variable conventions with validation blocks, module design patterns (when to create, interface rules, outputs), IAM least privilege, encryption everywhere, security groups with separate rules, VPC networking (3 AZs, public/private, NAT strategy), lifecycle rules, data sources, .gitignore, 15-item output checklist.
 
-`references/common-pitfalls.md` — 252 lines covering state migration pitfalls, multi-account provider configuration, provider version conflicts, workspace vs directory tradeoffs, and common plan/apply failure patterns.
+**common-pitfalls.md covers:** State lock stuck, provider version conflicts, dependency cycles, count vs for_each, sensitive output leaks, destroy-then-create downtime, state drift detection, module version pinning, importing existing resources, cross-account/cross-region patterns with provider aliases.
+</details>
 
-### monitoring-generator
+<details>
+<summary><b>monitoring-generator</b> — SKILL.md (~420 lines) + common-pitfalls.md (~200 lines)</summary>
 
-`SKILL.md` — 602 lines covering Prometheus alerting rule structure, alert design principles (the 3am test, severity levels), RED method alerts for services, USE method alerts for infrastructure, database alerts (PostgreSQL, Redis), Kubernetes alerts (crash-loop, deployment mismatch, node not ready, PVC full), recording rule naming conventions, AlertManager routing tree design, Grafana dashboard structure and provisioning, `ServiceMonitor`/`PodMonitor` with metric relabeling, SLI/SLO definitions with multi-window burn rate, and the 14-item output checklist.
+**SKILL.md covers:** RED method alerts (Rate, Errors, Duration), USE method alerts (Utilization, Saturation, Errors), database alerts (PostgreSQL connections/replication/deadlocks, Redis memory/evictions), Kubernetes alerts (CrashLoopBackOff, replica mismatch, node not ready, PVC), predictive alerts (disk fill in 24h), recording rules with naming convention, AlertManager routing tree with PagerDuty/Slack/inhibition, Grafana dashboard structure and JSON conventions, provisioning YAML, ServiceMonitor/PodMonitor CRDs with metric dropping, SLI/SLO with multi-window burn rate, 14-item output checklist.
 
-`references/common-pitfalls.md` — 212 lines covering cardinality explosion patterns, alert fatigue causes, histogram bucket design, high-cardinality label sources, and Grafana performance issues.
+**common-pitfalls.md covers:** Cardinality explosion, alert fatigue, histogram bucket design, rate() on counter resets, absent() for missing metrics, dashboard query performance, label conflicts on federation, recording rule staleness, Grafana variable load time, phantom alerts on deploy.
+</details>
 
 ---
 
-## Installation Options
+## Installation
 
 ### All skills (recommended)
 
 ```bash
+git clone https://github.com/idanvn/claude-devops-skills.git
+cd claude-devops-skills
 ./install.sh
+# Restart Claude Code
 ```
-
-Installs all three skills to `~/.claude/skills/`. Restart Claude Code.
 
 ### Single skill
 
 ```bash
-SKILLS_DIR="${HOME}/.claude/skills"
-mkdir -p "${SKILLS_DIR}/docker-generator/references"
-cp -r docker-generator/* "${SKILLS_DIR}/docker-generator/"
+mkdir -p ~/.claude/skills/docker-generator/references
+cp -r docker-generator/* ~/.claude/skills/docker-generator/
+# Restart Claude Code
 ```
 
-### Per-project install
+### Per-project (team sharing)
 
-Copy a skill directory into `.claude/skills/` at the project root. Claude Code picks it up automatically for that project.
+```bash
+# Copy into your repo — anyone who clones gets the skill
+cp -r docker-generator .claude/skills/docker-generator
+git add .claude/skills
+git commit -m "Add Docker skill for Claude Code"
+```
 
-```
-your-repo/
-└── .claude/
-    └── skills/
-        └── docker-generator/
-            ├── SKILL.md
-            └── references/
-                └── common-pitfalls.md
-```
+---
+
+## Requirements
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) CLI
+- Claude Pro, Max, or API access
 
 ---
 
 ## Contributing
 
-Bug reports, improved checklist items, and new reference pitfalls are welcome. Open an issue or pull request.
+PRs welcome. Follow the existing structure:
 
-If you add a new skill, follow the same structure: `SKILL.md` with a frontmatter block, a workflow section, standards sections, and an output checklist. Add a `references/common-pitfalls.md` for failure modes that aren't obvious from the main skill.
+```
+skill-name/
+├── SKILL.md                    # Frontmatter + instructions
+└── references/
+    └── common-pitfalls.md      # Edge cases + fixes
+```
+
+Rules: every skill needs an output checklist. Every alert must pass the 3am test. No fluff in documentation.
 
 ---
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+[MIT](LICENSE) — use it, fork it, share it.
